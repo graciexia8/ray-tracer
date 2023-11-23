@@ -3,24 +3,36 @@
 #include "color.h"
 #include "ray.h"
 
-bool hit_sphere(const point3& center, double radius, const ray& ray) {
+double hit_sphere(const point3& center, double radius, const ray& ray) {
     // dot porduct order does not matter
     vec3 oc = ray.origin() - center;
     auto a = dot(ray.direction(), ray.direction());
-    auto b = 2.0 * dot(oc, ray.direction());
+    auto half_b = dot(oc, ray.direction());
     auto c = dot(oc, oc) - radius*radius;
-    auto discriminant = (b*b) - (4*a*c);
+    auto discriminant = (half_b*half_b) - (a*c);
     // discriminant describes the square root portion of the quadratic eqn
     // if dis = 0 -> one real root, if dis = 2 -> two roots (ray passes through circle twice)
     // if dis < 0, ray does not hit the circle
-    return (discriminant >= 0);
+    if (discriminant < 0) {
+        return -1.0;
+    } 
+    else {
+        // we do -b - srqt(...) and not -b + sqrt(...) because:
+        // we are already assuming sqrt(...) returns either 1 or 2 real roots
+        // if 1 real root then discriminant = 0, if you plug into eqn, the +/- sqrt doesn't even matter
+        // id 2 real roots the you do -b - sqrt(...) to get the smallest t value because it's the closest hit point between ray and sphere (because there are 2 hit poitns)
+        // the larger t value means that the point is farther along the ray => further hit point
+        return (-half_b - sqrt(discriminant)) / a;
+    }
 }
 
 color ray_color(const ray& r) {
+    auto sphere_center = point3(0,0,-1);
+    auto t = hit_sphere(sphere_center, 0.5, r);
 
-    if (hit_sphere(point3(0,0,-1), 0.5, r)){
-
-        return color(1,0,0);
+    if (t > 0){
+        auto unit_normal = r.at(t) - sphere_center;
+        return color(unit_normal.x(), unit_normal.y(), unit_normal.z());
     }
 
     vec3 unit_direction = unit_vector(r.direction());

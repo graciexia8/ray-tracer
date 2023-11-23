@@ -8,12 +8,11 @@
 #include <iostream>
 
 class camera {
-
-
     public:
         
         double aspect_ratio = 1.0;
         int image_width = 100;
+        int samples_per_pixel = 10;
 
         void render(const hittable_list& world) {
             init();
@@ -29,13 +28,19 @@ class camera {
                         static_cast<double>(P00.y()+(j*delta_v.y())), 
                         static_cast<double>(P00.z())
                     );
-                    // auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
-                    auto ray_direction = pixel_center - camera_center; // direction of ray is from camera to pixel
-                    ray r(camera_center, ray_direction);
+                    color pixel_color(0,0,0);
+                    for (int sample = 0; sample < samples_per_pixel; sample++) {
+                        ray sampled_ray = get_ray(i,j);
+                        pixel_color += ray_color(sampled_ray, world);
 
-                    color pixel_color = ray_color(r, world);
+                    }
+                    // // auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
+                    // auto ray_direction = pixel_center - camera_center; // direction of ray is from camera to pixel
+                    // ray r(camera_center, ray_direction);
+
+                    // color pixel_color = ray_color(r, world);
                     // auto pixel_color = color(double(j) / image_width, double(i) /image_height, 0);
-                    write_color(std::cout, pixel_color);
+                    write_color(std::cout, pixel_color, samples_per_pixel);
                 }
             } 
             std::clog << "Done.\n";
@@ -86,6 +91,24 @@ class camera {
             auto white = color(1.0, 1.0, 1.0);
             auto blue = color(0.5, 0.7, 1.0);
             return (1.0-a)*white + a*blue;
+        }
+
+        ray get_ray(int i, int j) {
+            // Get a randomly sampled camera ray for the pixel at location i,j.
+            auto pixel_center = vec3(static_cast<double>(P00.x()+(i*delta_u.x())),
+                static_cast<double>(P00.y()+(j*delta_v.y())), 
+                static_cast<double>(P00.z())
+            );
+            auto pixel_sample = pixel_center + pixel_sample_square();
+            auto ray_origin = camera_center;
+            auto ray_direction = pixel_sample - ray_origin;
+            return ray(ray_origin, ray_direction);
+        }
+
+        vec3 pixel_sample_square() {
+            auto px = -0.5 + random_double();
+            auto py = -0.5 + random_double();
+            return (px * delta_u) + (py * delta_v);
         }
 };
 #endif

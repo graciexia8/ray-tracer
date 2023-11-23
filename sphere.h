@@ -12,7 +12,7 @@ class Sphere : public hittable {
     public:
         Sphere(point3 center, double radius) : center(center), radius(radius) {}
 
-        bool hit (const ray& ray, double ray_tmin, double ray_tmax, hit_record& rec) const override {
+        bool hit (const ray& ray, interval ray_t,  hit_record& rec) const override {
                 // dot porduct order does not matter
                 vec3 oc = ray.origin() - center; // if you factor out the dot product this is eqn u get, no actual meaning
                 auto a = dot(ray.direction(), ray.direction());
@@ -32,9 +32,9 @@ class Sphere : public hittable {
                     // id 2 real roots the you do -b - sqrt(...) to get the smallest t value because it's the closest hit point between ray and sphere (because there are 2 hit poitns)
                     // the larger t value means that the point is farther along the ray => further hit point
                     auto root = (-half_b - sqrt(discriminant)) / a;
-                    if (root < ray_tmin || root > ray_tmax) {
+                    if (!ray_t.surrounds(root)) {
                         root = (-half_b + sqrt(discriminant)) / a;
-                        if (root < ray_tmin || root > ray_tmax) {
+                        if (!ray_t.surrounds(root)) {
                             return false;
                         }
                     }

@@ -6,7 +6,6 @@
 #include <memory>
 #include <cstdlib>
 
-
 // Usings
 
 using std::shared_ptr;

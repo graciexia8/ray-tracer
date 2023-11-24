@@ -13,6 +13,7 @@ class camera {
         double aspect_ratio = 1.0;
         int image_width = 100;
         int samples_per_pixel = 10;
+        int max_depth = 10;
 
         void render(const hittable_list& world) {
             init();
@@ -31,7 +32,7 @@ class camera {
                     color pixel_color(0,0,0);
                     for (int sample = 0; sample < samples_per_pixel; sample++) {
                         ray sampled_ray = get_ray(i,j);
-                        pixel_color += ray_color(sampled_ray, world);
+                        pixel_color += ray_color(sampled_ray, world, max_depth);
 
                     }
                     // // auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
@@ -80,10 +81,15 @@ class camera {
             // auto P00 = Q + 0.5 * (delta_u + delta_v);
         }
 
-        color ray_color(const ray& r, const hittable& world) const {
+        color ray_color(const ray& r, const hittable& world, int max_depth) const {
+            if (max_depth <= 0) {
+                return color(0,0,0);
+            }
+
             hit_record rec;
             if (world.hit(r, interval(0, infinity), rec)) {
-                return color(rec.normal.x(), rec.normal.y(), rec.normal.z());
+                vec3 direction = rec.normal + random_unit_vector();
+                return 0.5 * ray_color(ray(rec.point, direction), world, max_depth-1);
             }
 
             vec3 unit_direction = unit_vector(r.direction());

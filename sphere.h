@@ -4,15 +4,17 @@
 #include "vec3.h"
 #include "ray.h"
 #include "hittable.h"
+#include "material.h"
 
 class Sphere : public hittable {
     private:
         point3 center;
         double radius;
+        shared_ptr<material> mat;
     public:
-        Sphere(point3 center, double radius) : center(center), radius(radius) {}
+        Sphere(point3 center, double radius, shared_ptr<material> mat ) : center(center), radius(radius), mat(mat) {}
 
-        bool hit (const ray& ray, interval ray_t,  hit_record& rec) const override {
+        bool hit (const ray& ray, interval ray_t, hit_record& rec) const override {
                 // dot porduct order does not matter
                 vec3 oc = ray.origin() - center; // if you factor out the dot product this is eqn u get, no actual meaning
                 auto a = dot(ray.direction(), ray.direction());
@@ -43,6 +45,7 @@ class Sphere : public hittable {
                     rec.point = ray.at(rec.t);
                     vec3 outwardNormalUnit = (rec.point - center) / radius;
                     rec.set_frontface(ray, outwardNormalUnit);
+                    rec.material_pointer = mat;
 
                     return true;
                 }

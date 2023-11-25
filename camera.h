@@ -22,6 +22,7 @@ class camera {
 
             // for (int i = 0 ; i < image_width; i++) {
             for (int j = 0; j < image_height; ++j) {
+                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
 
                 // for (int j = 0; j < image_height; j++) {
                 for (int i = 0; i < image_width; ++i) {
@@ -88,8 +89,13 @@ class camera {
 
             hit_record rec;
             if (world.hit(r, interval(0, infinity), rec)) {
-                vec3 direction = rec.normal + random_unit_vector();
-                return 0.5 * ray_color(ray(rec.point, direction), world, max_depth-1);
+                color attenuation;
+                ray scattered;
+
+                if (rec.material_pointer->scatter(r, rec, attenuation, scattered)){
+                    return attenuation*ray_color(scattered, world, max_depth-1);
+                }
+                return color(0,0,0);
             }
 
             vec3 unit_direction = unit_vector(r.direction());

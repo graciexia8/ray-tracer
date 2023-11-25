@@ -2,11 +2,14 @@
 #define HITTABLE_H
 #include "util.h"
 
+class material;
+
 class hit_record {
     public:
         double t;
         point3 point;
         vec3 normal;
+        shared_ptr<material> material_pointer;
         bool frontface;
 
         void set_frontface(const ray& ray, vec3 outwardNormal) {

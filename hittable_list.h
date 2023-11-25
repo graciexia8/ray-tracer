@@ -20,6 +20,9 @@ class hittable_list : public hittable {
         void add(shared_ptr<hittable> object) {
             objects.push_back(object);
         }
+        int length() {
+            return objects.size();
+        }
         
         // only want to store a record of the closest object hit
         bool hit(const ray& r, interval ray_t,  hit_record& rec) const override {

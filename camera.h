@@ -28,10 +28,6 @@ class camera {
                 std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
 
                 for (int i = 0; i < image_width; ++i) {
-                    auto pixel_center = vec3(static_cast<double>(P00.x()+(i*delta_u.x())),
-                        static_cast<double>(P00.y()+(j*delta_v.y())), 
-                        static_cast<double>(P00.z())
-                    );
                     color pixel_color(0,0,0);
                     for (int sample = 0; sample < samples_per_pixel; sample++) {
                         ray sampled_ray = get_ray(i,j);
@@ -61,7 +57,7 @@ class camera {
             // // Viewport & Camera
             camera_center = lookfrom;
 
-            auto focal_length = (lookfrom - lookat).length_square();
+            auto focal_length = (lookfrom - lookat).length();
             auto theta = degrees_to_radians(vfov);
             auto h = tan(theta/2);
             auto viewport_height = 2 * h * focal_length;
@@ -72,6 +68,10 @@ class camera {
             u = unit_vector(cross(vup, w));
             v = cross(w, u);
 
+            // // Calculate the vectors across the horizontal and down the vertical viewport edges.
+            // auto viewport_u = vec3(viewport_width, 0, 0);
+            // auto viewport_v = vec3(0, -viewport_height, 0);
+
             // Calculate the vectors across the horizontal and down the vertical viewport edges.
             vec3 viewport_u = viewport_width * u;    // Vector across viewport horizontal edge
             vec3 viewport_v = viewport_height * -v;  // Vector down viewport vertical edge
@@ -81,10 +81,9 @@ class camera {
             delta_v = viewport_v / image_height; // Debug #1 had a typo
 
             // // upper left starting pixel
-            auto viewport_upper_left = camera_center - (focal_length * w) - viewport_u/2 - viewport_v/2;
-            P00 = vec3(viewport_upper_left.x()+(static_cast<double>(delta_u.x()/2.0)),
-            static_cast<double>(viewport_upper_left.y()+(delta_v.y()/2.0)),
-                static_cast<double>(viewport_upper_left.z()));
+            auto viewport_upper_left =
+                camera_center - (focal_length*w) - viewport_u/2 - viewport_v/2;
+            P00 = viewport_upper_left + 0.5 * (delta_u + delta_v);
         }
 
         color ray_color(const ray& r, const hittable& world, int max_depth) const {
@@ -93,7 +92,7 @@ class camera {
             }
 
             hit_record rec;
-            if (world.hit(r, interval(0, infinity), rec)) {
+            if (world.hit(r, interval(0.001, infinity), rec)) {
                 color attenuation;
                 ray scattered;
 
@@ -112,10 +111,7 @@ class camera {
 
         ray get_ray(int i, int j) {
             // Get a randomly sampled camera ray for the pixel at location i,j.
-            auto pixel_center = vec3(static_cast<double>(P00.x()+(i*delta_u.x())),
-                static_cast<double>(P00.y()+(j*delta_v.y())), 
-                static_cast<double>(P00.z())
-            );
+            auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
             auto pixel_sample = pixel_center + pixel_sample_square();
             auto ray_origin = camera_center;
             auto ray_direction = pixel_sample - ray_origin;

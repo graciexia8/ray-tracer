@@ -45,7 +45,7 @@ class vec3 {
         }
 
         double length() const {
-            return sqrt( e[0]*e[0] + e[1]*e[1] + e[2]*e[2]);
+            return sqrt(e[0]*e[0] + e[1]*e[1] + e[2]*e[2]);
         }
 
         static vec3 random(){

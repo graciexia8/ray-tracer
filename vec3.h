@@ -18,7 +18,7 @@ class vec3 {
         double y() const {return e[1];}
         double z() const {return e[2];}
 
-        vec3 operator-() const { return vec3(-e[0], -e[1], e[2]); }
+        vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
         double operator[](int i) const {return e[i];}
         double& operator[](int i) {return e[i];}
 
@@ -146,6 +146,14 @@ vec3 refract(const vec3& incoming_ray, const vec3& normal, const double eta_over
     auto r_perp = eta_over_eta_prime*(incoming_ray+(cos_theta*normal));
     auto r_parallel = -sqrt(fabs(1.0-r_perp.length_square()))*normal;
   return r_perp + r_parallel;
+}
+
+inline vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(random_double(-1,1), random_double(-1,1), 0);
+        if (p.length_square() < 1)
+            return p;
+    }
 }
 
 #endif

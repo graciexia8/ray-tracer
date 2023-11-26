@@ -19,6 +19,9 @@ class camera {
         point3 lookat   = point3(0,0,0);   // Point camera is looking at
         vec3   vup      = vec3(0,1,0);     // Camera-relative "up" direction
 
+        double defocus_angle = 0;  // Variation angle of rays through each pixel
+        double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
+
         void render(const hittable_list& world) {
             init();
             // Render
@@ -48,16 +51,17 @@ class camera {
         vec3 delta_u;
         vec3 delta_v;
         vec3   u, v, w;        // Camera frame basis vectors
-
+        vec3   defocus_disk_u;  // Defocus disk horizontal radius
+        vec3   defocus_disk_v;  // Defocus disk vertical radius
 
         void init() {
             image_height = static_cast<int>(image_width / aspect_ratio);
             image_height = (image_height < 1) ? 1 : image_height;
 
             // // Viewport & Camera
-            camera_center = lookfrom;
-
             auto focal_length = (lookfrom - lookat).length();
+
+            camera_center = lookfrom;
             auto theta = degrees_to_radians(vfov);
             auto h = tan(theta/2);
             auto viewport_height = 2 * h * focal_length;
@@ -67,10 +71,6 @@ class camera {
             w = unit_vector(lookfrom - lookat);
             u = unit_vector(cross(vup, w));
             v = cross(w, u);
-
-            // // Calculate the vectors across the horizontal and down the vertical viewport edges.
-            // auto viewport_u = vec3(viewport_width, 0, 0);
-            // auto viewport_v = vec3(0, -viewport_height, 0);
 
             // Calculate the vectors across the horizontal and down the vertical viewport edges.
             vec3 viewport_u = viewport_width * u;    // Vector across viewport horizontal edge
@@ -125,3 +125,4 @@ class camera {
         }
 };
 #endif
+

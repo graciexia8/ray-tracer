@@ -141,4 +141,11 @@ vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2*dot(v,n)*n;
 }
 
+vec3 refract(const vec3& incoming_ray, const vec3& normal, const double eta_over_eta_prime) {
+    auto cos_theta = fmin(dot(-incoming_ray, normal), 1.0);
+    auto r_perp = eta_over_eta_prime*(incoming_ray+(cos_theta*normal));
+    auto r_parallel = -sqrt(fabs(1.0-r_perp.length_square()))*normal;
+  return r_perp + r_parallel;
+}
+
 #endif

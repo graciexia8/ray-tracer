@@ -14,17 +14,19 @@ class camera {
         int image_width = 100;
         int samples_per_pixel = 10;
         int max_depth = 10;
+        double vfov = 90; // Verticel view angle (field of view)
+        point3 lookfrom = point3(0,0,-1);  // Point camera is looking from
+        point3 lookat   = point3(0,0,0);   // Point camera is looking at
+        vec3   vup      = vec3(0,1,0);     // Camera-relative "up" direction
 
         void render(const hittable_list& world) {
             init();
             // Render
             std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-            // for (int i = 0 ; i < image_width; i++) {
             for (int j = 0; j < image_height; ++j) {
                 std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
 
-                // for (int j = 0; j < image_height; j++) {
                 for (int i = 0; i < image_width; ++i) {
                     auto pixel_center = vec3(static_cast<double>(P00.x()+(i*delta_u.x())),
                         static_cast<double>(P00.y()+(j*delta_v.y())), 
@@ -36,12 +38,7 @@ class camera {
                         pixel_color += ray_color(sampled_ray, world, max_depth);
 
                     }
-                    // // auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
-                    // auto ray_direction = pixel_center - camera_center; // direction of ray is from camera to pixel
-                    // ray r(camera_center, ray_direction);
 
-                    // color pixel_color = ray_color(r, world);
-                    // auto pixel_color = color(double(j) / image_width, double(i) /image_height, 0);
                     write_color(std::cout, pixel_color, samples_per_pixel);
                 }
             } 
@@ -54,32 +51,40 @@ class camera {
         point3 P00;
         vec3 delta_u;
         vec3 delta_v;
+        vec3   u, v, w;        // Camera frame basis vectors
+
 
         void init() {
             image_height = static_cast<int>(image_width / aspect_ratio);
             image_height = (image_height < 1) ? 1 : image_height;
 
             // // Viewport & Camera
-            auto viewport_height = 2.0;
+            camera_center = lookfrom;
+
+            auto focal_length = (lookfrom - lookat).length_square();
+            auto theta = degrees_to_radians(vfov);
+            auto h = tan(theta/2);
+            auto viewport_height = 2 * h * focal_length;
             auto viewport_width = viewport_height * (static_cast<double>(image_width)/image_height);
-            // // auto viewport_width = viewport_height*(static_cast<double>(image_width/image_height));
-            auto focal_length = 1.0;
-            camera_center = point3(0,0,0);
 
+            // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
+            w = unit_vector(lookfrom - lookat);
+            u = unit_vector(cross(vup, w));
+            v = cross(w, u);
 
-            // // vecotrs that define the viewport width and height
-            auto viewport_u = vec3(viewport_width, 0, 0);
-            auto viewport_v = vec3(0, -viewport_height, 0);
+            // Calculate the vectors across the horizontal and down the vertical viewport edges.
+            vec3 viewport_u = viewport_width * u;    // Vector across viewport horizontal edge
+            vec3 viewport_v = viewport_height * -v;  // Vector down viewport vertical edge
+
+            // // vectors that define the viewport width and height
             delta_u = viewport_u / image_width;
             delta_v = viewport_v / image_height; // Debug #1 had a typo
 
             // // upper left starting pixel
-            auto Q = camera_center - vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
-
-            P00 = vec3(Q.x()+(static_cast<double>(delta_u.x()/2.0)),
-            static_cast<double>(Q.y()+(delta_v.y()/2.0)),
-                static_cast<double>(Q.z()));
-            // auto P00 = Q + 0.5 * (delta_u + delta_v);
+            auto viewport_upper_left = camera_center - (focal_length * w) - viewport_u/2 - viewport_v/2;
+            P00 = vec3(viewport_upper_left.x()+(static_cast<double>(delta_u.x()/2.0)),
+            static_cast<double>(viewport_upper_left.y()+(delta_v.y()/2.0)),
+                static_cast<double>(viewport_upper_left.z()));
         }
 
         color ray_color(const ray& r, const hittable& world, int max_depth) const {

@@ -10,6 +10,7 @@ How to run:
 - Run using `./ray > test_image.ppm`  
 <br><br>
 Progress so far:  
-![progress](https://github.com/graciexia8/ray-tracer/assets/15184219/77cae621-b209-40b9-b622-41b8cbe4f0a9)
+![progress](https://github.com/graciexia8/ray-tracer/assets/15184219/022488e4-92e5-4013-8317-14e2a232d0a5)
+
 
 

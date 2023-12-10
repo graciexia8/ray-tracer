@@ -7,6 +7,7 @@ class interval {
 
         interval() : min(-infinity), max(+infinity) {}
         interval(double min, double max) : min(min), max(max) {}
+        interval(const interval& a, const interval& b) : min(fmin(a.min, b.min)), max(fmax(a.max, b.max)) {}
 
         bool contains(double value) {
             return value >= min && value <= max;
@@ -20,6 +21,11 @@ class interval {
             if (value < min) return min;
             if (value > max) return max;
             return value;
+        }
+
+        interval expand(double delta) {
+            auto padding = delta / 2;
+            return interval(min-padding, max+padding);
         }
 
         static const interval empty;

@@ -59,12 +59,11 @@ class camera {
             image_height = (image_height < 1) ? 1 : image_height;
 
             // // Viewport & Camera
-            auto focal_length = (lookfrom - lookat).length();
 
             camera_center = lookfrom;
             auto theta = degrees_to_radians(vfov);
             auto h = tan(theta/2);
-            auto viewport_height = 2 * h * focal_length;
+            auto viewport_height = 2 * h * focus_dist;
             auto viewport_width = viewport_height * (static_cast<double>(image_width)/image_height);
 
             // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
@@ -82,8 +81,13 @@ class camera {
 
             // // upper left starting pixel
             auto viewport_upper_left =
-                camera_center - (focal_length*w) - viewport_u/2 - viewport_v/2;
+                camera_center - (focus_dist*w) - viewport_u/2 - viewport_v/2;
             P00 = viewport_upper_left + 0.5 * (delta_u + delta_v);
+
+            // Calculate the camera defocus disk basis vectors.
+            auto defocus_radius = focus_dist * tan(degrees_to_radians(defocus_angle / 2));
+            defocus_disk_u = u * defocus_radius;
+            defocus_disk_v = v * defocus_radius;
         }
 
         color ray_color(const ray& r, const hittable& world, int max_depth) const {
@@ -113,9 +117,17 @@ class camera {
             // Get a randomly sampled camera ray for the pixel at location i,j.
             auto pixel_center = P00 + (i * delta_u) + (j * delta_v);
             auto pixel_sample = pixel_center + pixel_sample_square();
-            auto ray_origin = camera_center;
+            auto ray_origin = (defocus_angle <= 0) ? camera_center : defocus_disk_sample();
             auto ray_direction = pixel_sample - ray_origin;
-            return ray(ray_origin, ray_direction);
+
+            double ray_time = random_double();
+            return ray(ray_origin, ray_direction, ray_time);
+        }
+
+        point3 defocus_disk_sample() const {
+            // Returns a random point in the camera defocus disk.
+            auto p = random_in_unit_disk();
+            return camera_center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
         }
 
         vec3 pixel_sample_square() {

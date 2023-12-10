@@ -24,12 +24,12 @@ class dielectric : public material {
         if (cannot_refract || reflectance(cos_theta, eta_over_eta_prime) > random_double()) {
             // reflect
             vec3 reflected_direction = reflect(r_in_direction_unit, rec.normal);
-            scattered = ray(rec.point, reflected_direction);
+            scattered = ray(rec.point, reflected_direction, r_in.time());
         }
         else {
             // rec is already normalized
             vec3 refracted_direction = refract(r_in_direction_unit, rec.normal, eta_over_eta_prime);
-            scattered = ray(rec.point, refracted_direction);
+            scattered = ray(rec.point, refracted_direction, r_in.time());
         }
 
         return true;

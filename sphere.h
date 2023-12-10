@@ -8,15 +8,45 @@
 
 class Sphere : public hittable {
     private:
-        point3 center;
         double radius;
         shared_ptr<material> mat;
+        bool _isMoving;
+        point3 _center1;
+        point3 _center2;
+        vec3 _center_direction;
+        aabb bbox;
+
+        
+        point3 center(double time) const {
+            // Linearly interpolate from center1 to center2 according to time, where t=0 yields
+            // center1, and t=1 yields center2.
+            return _center1 + time*_center_direction;
+        }
     public:
-        Sphere(point3 center, double radius, shared_ptr<material> mat ) : center(center), radius(radius), mat(mat) {}
+        // Stationary sphere
+        Sphere(point3 center, double radius, shared_ptr<material> mat ) : _center1(center), radius(radius), mat(mat), _isMoving(false) {
+            vec3 rvec = vec3(radius, radius, radius);
+            // draw out the vector subtraction/addition from the center of the sphere
+            bbox = aabb(center - rvec, center + rvec);
+        }
+
+        // Moving Sphere
+        Sphere(point3 center1, point3 center2, double radius, shared_ptr<material> mat ) : _center1(center1), _center2(center2), radius(radius), mat(mat), _isMoving(true) {
+            _center_direction = _center2 - center1;
+            vec3 rvec = vec3(radius, radius, radius);
+            aabb box1 = aabb(center1 - rvec, center2 + rvec);
+            aabb box2 = aabb(center2 - rvec, center2 + rvec);
+            bbox = aabb(box1, box2);
+        }
+
+        aabb bounding_box() const override {
+            return bbox;
+        }
 
         bool hit (const ray& ray, interval ray_t, hit_record& rec) const override {
                 // dot porduct order does not matter
-                vec3 oc = ray.origin() - center; // if you factor out the dot product this is eqn u get, no actual meaning
+                point3 centerfinal = _isMoving ? center(ray.time()) : _center1;
+                vec3 oc = ray.origin() - centerfinal; // if you factor out the dot product this is eqn u get, no actual meaning
                 auto a = dot(ray.direction(), ray.direction());
                 auto half_b = dot(oc, ray.direction());
                 auto c = dot(oc, oc) - radius*radius;
@@ -43,7 +73,7 @@ class Sphere : public hittable {
 
                     rec.t = root;
                     rec.point = ray.at(rec.t);
-                    vec3 outwardNormalUnit = (rec.point - center) / radius;
+                    vec3 outwardNormalUnit = (rec.point - centerfinal) / radius;
                     rec.set_frontface(ray, outwardNormalUnit);
                     rec.material_pointer = mat;
 
